@@ -1,0 +1,9 @@
+Flask
+Flask-Session
+torch
+transformers
+accelerate
+bitsandbytes
+python-dotenv
+textblob
+flask_sqlalchemy

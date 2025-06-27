@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About CitizenAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="about-container">
+        <h1>About CitizenAI</h1>
+        <p>
+            CitizenAI is a civic engagement platform powered by advanced artificial intelligence.
+            It bridges the gap between citizens and governments by enabling intuitive communication, feedback, and issue reporting — all through a friendly AI assistant.
+        </p>
+
+        <section class="simple-terms">
+            <h2>🔍 In Simple Terms</h2>
+            <ul>
+                <li>Ask the AI Assistant questions about services, laws, or procedures.</li>
+                <li>Submit your feedback, and let AI detect the sentiment.</li>
+                <li>Report concerns like broken streetlights, water issues, etc.</li>
+            </ul>
+        </section>
+
+        <section class="key-features">
+            <h2>🚀 Key Features</h2>
+            <ul>
+                <li>💬 AI Chat Assistant powered by IBM Granite</li>
+                <li>🧠 Sentiment Analysis for citizen feedback</li>
+                <li>📢 Concern Reporting for local issues</li>
+                <li>📊 Insightful Dashboard for real-time overview</li>
+            </ul>
+        </section>
+
+        <section class="why-useful">
+            <h2>💡 Why It's Useful</h2>
+            <p>
+                CitizenAI promotes transparent governance, quick issue resolution, and increased trust.
+                It gives every citizen a voice, while helping authorities understand community needs better.
+            </p>
+        </section>
+
+        <a href="{{ url_for('index') }}" class="back-home">← Back to Home</a>
+    </div>
+</body>
+</html>
