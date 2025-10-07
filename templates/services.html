@@ -1,38 +1,203 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CitizenAI | Our Services</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f8f9fa;
+      color: #333;
+    }
 
-{% block content %}
-<div class="container">
-    <h1 class="text-center mt-5 mb-4">Our Services</h1>
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      padding: 15px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card shadow p-3">
-                <h4>🤖 AI Chat Assistant</h4>
-                <p>Get instant answers to your civic-related questions with our AI powered by IBM Granite.</p>
-            </div>
-        </div>
+    .navbar {
+      width: 90%;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        <div class="col-md-6 mb-4">
-            <div class="card shadow p-3">
-                <h4>📢 Report Concerns</h4>
-                <p>Easily report civic issues like garbage, water, lighting, etc., to local authorities.</p>
-            </div>
-        </div>
+    .logo {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
 
-        <div class="col-md-6 mb-4">
-            <div class="card shadow p-3">
-                <h4>📊 Sentiment Analysis</h4>
-                <p>Track how people feel about issues—positive, negative, or neutral—in real time.</p>
-            </div>
-        </div>
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
 
-        <div class="col-md-6 mb-4">
-            <div class="card shadow p-3">
-                <h4>🔐 User Dashboard</h4>
-                <p>Secure login to view reports, analytics, and submitted concerns.</p>
-            </div>
-        </div>
+    .nav-links a:hover {
+      background: white;
+      color: #0077b6;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .services-container {
+      max-width: 1200px;
+      margin: 60px auto;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .services-container h1 {
+      color: #023e8a;
+      font-size: 2.5rem;
+      margin-bottom: 40px;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+    }
+
+    .service-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px 25px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .service-icon {
+      font-size: 2.5rem;
+      color: #00b4d8;
+      margin-bottom: 15px;
+    }
+
+    .service-card h3 {
+      color: #0077b6;
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+
+    .service-card p {
+      color: #555;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    /* ===== CTA ===== */
+    .cta {
+      margin-top: 50px;
+    }
+
+    .cta a {
+      background: #0077b6;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    .cta a:hover {
+      background: #023e8a;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #023e8a;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .services-container {
+        margin: 30px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="navbar">
+      <div class="logo">🤖 CitizenAI</div>
+      <div class="nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('login') }}">Login</a>
+      </div>
     </div>
-</div>
-{% endblock %}
+  </header>
 
+  <!-- ===== SERVICES CONTENT ===== -->
+  <div class="services-container">
+    <h1>Our Smart Services</h1>
+
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">🤖</div>
+        <h3>AI Chat Assistant</h3>
+        <p>Get real-time, intelligent responses to civic-related queries powered by IBM Granite AI.</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📢</div>
+        <h3>Report Concerns</h3>
+        <p>Quickly report public issues such as water leaks, lighting, or garbage collection to local authorities.</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📊</div>
+        <h3>Sentiment Analysis</h3>
+        <p>Understand citizen feedback instantly with smart sentiment detection for improved decision-making.</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🔐</div>
+        <h3>Secure Dashboard</h3>
+        <p>Access a personalized dashboard to monitor reports, analyze data, and track civic improvements.</p>
+      </div>
+    </div>
+
+    <div class="cta">
+      <a href="{{ url_for('chat') }}">💬 Try the AI Chat Now</a>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    &copy; 2025 CitizenAI. All Rights Reserved.
+  </footer>
+
+</body>
+</html>

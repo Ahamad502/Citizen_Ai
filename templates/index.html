@@ -1,39 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CitizenAI - Welcome</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CitizenAI - Empowering Smart Communities</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ======== GLOBAL ======== */
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* ======== HEADER / NAVBAR ======== */
+    header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 90%;
+      margin: auto;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 10px 18px;
+      border-radius: 25px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      background: white;
+      color: #0077b6;
+      transform: translateY(-2px);
+    }
+
+    /* ======== HERO SECTION ======== */
+    .hero {
+      background: linear-gradient(to right, #00b4d8, #90e0ef);
+      color: white;
+      text-align: center;
+      padding: 100px 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+    }
+
+    .hero .btn {
+      background: white;
+      color: #0077b6;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .hero .btn:hover {
+      background: #023e8a;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    /* ======== SECTIONS ======== */
+    section {
+      padding: 60px 20px;
+      width: 90%;
+      margin: auto;
+      text-align: center;
+    }
+
+    section h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #023e8a;
+    }
+
+    section p {
+      max-width: 800px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    /* ======== SERVICES ======== */
+    .services {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .service-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+
+    .service-card h3 {
+      color: #0077b6;
+      margin-bottom: 10px;
+    }
+
+    .service-card p {
+      margin-bottom: 15px;
+    }
+
+    /* Buttons inside service cards */
+    .service-card .btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 25px;
+      background: #0077b6;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .service-card .btn:hover {
+      background: #023e8a;
+      transform: translateY(-2px);
+    }
+
+    /* ======== FOOTER ======== */
+    footer {
+      background: #023e8a;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 60px;
+      font-size: 0.9rem;
+    }
+
+    /* ======== RESPONSIVE ======== */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .navbar {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <header class="navbar">
-        <h1>Welcome to CitizenAI</h1>
-        <nav>
-            <a href="{{ url_for('about') }}">About</a>
-            <a href="{{ url_for('services') }}">Services</a>
-            <a href="{{ url_for('chat') }}">Chat</a>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('login') }}">Login</a>
-        </nav>
-    </header>
 
-    <!-- Hero Section -->
-    <main class="hero-section">
-        <div class="left-panel">
-            <h2>Empowering Citizens Through AI</h2>
-            <p>
-                CitizenAI is your intelligent assistant for civic engagement.
-                From accessing services to sharing feedback, our AI-powered platform helps citizens and governments communicate better—anytime, anywhere.
-            </p>
-            <a href="{{ url_for('login') }}" class="btn">Get Started</a>
-            <p class="sub-text">Join us in building a smarter, more responsive civic environment.</p>
-        </div>
-        <div class="right-panel">
-            <img src="{{ url_for('static', filename='Images/images.jpg') }}" alt="CitizenAI Image" style="width: 400px; border-radius: 10px;">
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="navbar">
+      <div class="logo">🤖 CitizenAI</div>
+      <div class="nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('login') }}">Login</a>
+      </div>
+    </div>
+  </header>
 
-        </div>
-    </main>
+  <!-- ===== HERO SECTION ===== -->
+  <section class="hero">
+    <h1>Empowering Smarter Communities</h1>
+    <p>CitizenAI connects people, governments, and technology for better civic engagement and community growth.</p>
+    <a href="{{ url_for('login') }}" class="btn">Get Started</a>
+  </section>
+
+  <!-- ===== ABOUT SECTION ===== -->
+  <section id="about">
+    <h2>About CitizenAI</h2>
+    <p>
+      CitizenAI is an intelligent civic platform designed to bridge the gap between citizens and governance. 
+      Our AI-driven tools provide insights, handle concerns, and support data-driven decision-making for communities.
+    </p>
+  </section>
+
+  <!-- ===== SERVICES SECTION ===== -->
+  <section id="services">
+    <h2>Our Services</h2>
+    <div class="services">
+      <div class="service-card">
+        <h3>🗣️ AI Chat Support</h3>
+        <p>Engage with our advanced AI assistant for instant responses to citizen queries.</p>
+        <a href="{{ url_for('chat') }}" class="btn">Go to Chat</a>
+      </div>
+      <div class="service-card">
+        <h3>📊 Sentiment Analysis</h3>
+        <p>Analyze citizen feedback and detect emotions to improve governance transparency.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn">View Dashboard</a>
+      </div>
+      <div class="service-card">
+        <h3>🧭 Dashboard Insights</h3>
+        <p>Visualize reports, track issues, and understand trends through data-driven dashboards.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn">Go to Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    &copy; 2025 CitizenAI. All Rights Reserved.
+  </footer>
+
 </body>
 </html>
-

@@ -1,34 +1,255 @@
-{% extends 'base.html' %}
-{% block title %}Chat{% endblock %}
-{% block content %}
-<h2>Ask the Assistant</h2>
-<form method="POST">
-    <input type="text" name="question" placeholder="Enter your question..." required>
-    <button type="submit">Submit</button>
-</form>
-{% if history %}
-<ul>
-  {% for q, a in history %}
-    <li><strong>You:</strong> {{ q }}<br><strong>AI:</strong> {{ a }}</li>
-  {% endfor %}
-</ul>
-{% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CitizenAI | Chat Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f8f9fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-<h2>Feedback Sentiment</h2>
-<form method="POST">
-    <textarea name="feedback" required></textarea>
-    <button type="submit">Analyze</button>
-</form>
-{% if sentiment %}
-<p>Sentiment: <strong>{{ sentiment }}</strong></p>
-{% endif %}
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      padding: 15px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-<h2>Report a Concern</h2>
-<form method="POST">
-    <textarea name="concern" required></textarea>
-    <button type="submit">Submit</button>
-</form>
-{% if concern_submitted %}
-<p class="response">Concern submitted successfully ✅</p>
-{% endif %}
-{% endblock %}
+    .navbar {
+      width: 90%;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      background: white;
+      color: #0077b6;
+    }
+
+    /* ===== CHAT CONTAINER ===== */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: #0077b6;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: #f1faff;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: #0077b6;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: #e0f7fa;
+      color: #023e8a;
+      border-bottom-left-radius: 5px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== INPUT AREA ===== */
+    .input-area {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      border-top: 1px solid #ccc;
+      background: #fff;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+
+    .input-area input:focus {
+      border-color: #0077b6;
+    }
+
+    .input-area button {
+      background: #0077b6;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin-left: 10px;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .input-area button:hover {
+      background: #023e8a;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #023e8a;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .chat-container { margin: 10px; }
+      .message { max-width: 85%; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="navbar">
+      <div class="logo">🤖 CitizenAI</div>
+      <div class="nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('login') }}">Login</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== CHAT INTERFACE ===== -->
+  <div class="chat-container">
+    <div class="chat-header">
+      💬 CitizenAI Chat Assistant
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="bot-message message">
+        Hello 👋! I’m CitizenAI — how can I assist you today? You can ask about civic issues, report a problem, or request local information.
+      </div>
+    </div>
+
+    <div class="input-area">
+      <form id="chatForm" method="POST" action="{{ url_for('chat') }}" style="display:flex; width:100%;">
+        <input type="text" id="userInput" name="message" placeholder="Type your message..." autocomplete="off" required>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    &copy; 2025 CitizenAI. All Rights Reserved.
+  </footer>
+
+  <!-- ===== JAVASCRIPT FOR AUTO SCROLL ===== -->
+  <script>
+    const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMsg = userInput.value.trim();
+      if (!userMsg) return;
+
+      // Add user message
+      const userDiv = document.createElement('div');
+      userDiv.classList.add('message', 'user-message');
+      userDiv.textContent = userMsg;
+      chatBox.appendChild(userDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Clear input
+      userInput.value = '';
+
+      // Send message to backend
+      const res = await fetch("{{ url_for('chat') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg })
+      });
+
+      const data = await res.json();
+
+      // Add bot response
+      const botDiv = document.createElement('div');
+      botDiv.classList.add('message', 'bot-message');
+      botDiv.textContent = data.response || "Sorry, I couldn't process that.";
+      chatBox.appendChild(botDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+</body>
+</html>

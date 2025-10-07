@@ -1,37 +1,245 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CitizenAI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #f4f6fb;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
 
-{% block content %}
-<div class="dashboard-container">
-    <h1>📊 Citizen Insights Dashboard</h1>
+    .dashboard-header {
+        background: linear-gradient(135deg, #0d47a1, #1976d2);
+        color: white;
+        text-align: center;
+        padding: 40px 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
 
-    <section class="summary-section">
-        <div class="card insight-card positive">
-            <h3>Positive Feedback</h3>
-            <p>{{ positive_count }}</p>
-        </div>
-        <div class="card insight-card neutral">
-            <h3>Neutral Feedback</h3>
-            <p>{{ neutral_count }}</p>
-        </div>
-        <div class="card insight-card negative">
-            <h3>Negative Feedback</h3>
-            <p>{{ negative_count }}</p>
-        </div>
-    </section>
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
 
-    <section class="issues-section">
-        <h2>📂 Recent Citizen Issues</h2>
-        <ul class="issue-list">
-            {% for issue in recent_issues %}
-                <li>🛠️ {{ issue }}</li>
-            {% else %}
-                <li>No issues reported yet.</li>
-            {% endfor %}
-        </ul>
-    </section>
+    .dashboard-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
 
-    <div class="back-link">
-        <a href="/">← Back to Home</a>
-    </div>
+    /* Back to Home Button */
+    .back-home {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: white;
+        color: #0d47a1;
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .back-home:hover {
+        background: #0d47a1;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .insights {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin: 40px auto;
+        max-width: 1100px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .card p {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .positive { background: linear-gradient(135deg, #e8f5e9, #a5d6a7); }
+    .neutral { background: linear-gradient(135deg, #fff8e1, #ffe082); }
+    .negative { background: linear-gradient(135deg, #ffebee, #ef9a9a); }
+
+    .charts {
+        max-width: 1100px;
+        margin: 60px auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px 30px;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-container h2 {
+        text-align: center;
+        color: #0d47a1;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
+    }
+
+    .recent-issues {
+        max-width: 1100px;
+        margin: 60px auto;
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+    }
+
+    .recent-issues h2 {
+        color: #0d47a1;
+        margin-bottom: 20px;
+    }
+
+    .issue-item {
+        background: #f7f9fc;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    footer {
+        text-align: center;
+        padding: 15px 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+        .charts {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="dashboard-header">
+    <div class="back-home" onclick="goBack()">🏠 Back to Home</div>
+    <h1>📊 CitizenAI Dashboard</h1>
+    <p>Real-time civic engagement insights & sentiment analysis</p>
 </div>
-{% endblock %}
+
+<!-- Insight Cards -->
+<section class="insights">
+    <div class="card positive">
+        <h3>😊 Positive Feedback</h3>
+        <p>124</p>
+    </div>
+    <div class="card neutral">
+        <h3>😐 Neutral Feedback</h3>
+        <p>89</p>
+    </div>
+    <div class="card negative">
+        <h3>☹️ Negative Feedback</h3>
+        <p>45</p>
+    </div>
+</section>
+
+<!-- Charts -->
+<section class="charts">
+    <div class="chart-container">
+        <h2>📈 Sentiment Overview</h2>
+        <canvas id="sentimentChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>🗂️ Reports by Category</h2>
+        <canvas id="categoryChart"></canvas>
+    </div>
+</section>
+
+<!-- Recent Issues -->
+<section class="recent-issues">
+    <h2>🛠️ Recent Citizen Reports</h2>
+    <div class="issue-item">🚧 Road Damage reported in Sector 14</div>
+    <div class="issue-item">💡 Streetlight malfunction in Zone 3</div>
+    <div class="issue-item">🗑️ Garbage overflow in Green Park</div>
+    <div class="issue-item">💧 Water leakage near Main Road</div>
+</section>
+
+<!-- Footer -->
+<footer>
+    © 2025 CitizenAI — Civic Data Visualization
+</footer>
+
+<script>
+    function goBack() {
+        window.location.href = "{{ url_for('index') }}";
+    }
+
+    // Sentiment Chart
+    const ctx1 = document.getElementById('sentimentChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+            labels: ['Positive', 'Neutral', 'Negative'],
+            datasets: [{
+                data: [124, 89, 45],
+                backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Category Chart
+    const ctx2 = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['Water', 'Electricity', 'Garbage', 'Roads', 'Lighting'],
+            datasets: [{
+                label: 'Number of Reports',
+                data: [8, 12, 6, 14, 10],
+                backgroundColor: '#1976d2',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+
+</body>
+</html>

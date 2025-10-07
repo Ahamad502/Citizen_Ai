@@ -1,46 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>About CitizenAI</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About CitizenAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      padding: 15px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .navbar {
+      width: 90%;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      background: white;
+      color: #0077b6;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .about-container {
+      max-width: 1000px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .about-container h1 {
+      font-size: 2.5rem;
+      color: #023e8a;
+      margin-bottom: 10px;
+    }
+
+    .about-container p {
+      line-height: 1.7;
+      color: #444;
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    section {
+      margin-bottom: 50px;
+      text-align: left;
+    }
+
+    section h2 {
+      color: #0077b6;
+      margin-bottom: 15px;
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      background: #f1faff;
+      margin: 10px 0;
+      padding: 12px 15px;
+      border-left: 4px solid #00b4d8;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    ul li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .why-useful p {
+      background: #e3f2fd;
+      padding: 20px;
+      border-left: 4px solid #0077b6;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      color: #333;
+    }
+
+    /* ===== BACK LINK ===== */
+    .back-home {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      background: #0077b6;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      transition: background 0.3s ease;
+      font-weight: 600;
+    }
+
+    .back-home:hover {
+      background: #023e8a;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #023e8a;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 50px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .about-container {
+        margin: 30px 20px;
+        padding: 25px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="about-container">
-        <h1>About CitizenAI</h1>
-        <p>
-            CitizenAI is a civic engagement platform powered by advanced artificial intelligence.
-            It bridges the gap between citizens and governments by enabling intuitive communication, feedback, and issue reporting — all through a friendly AI assistant.
-        </p>
 
-        <section class="simple-terms">
-            <h2>🔍 In Simple Terms</h2>
-            <ul>
-                <li>Ask the AI Assistant questions about services, laws, or procedures.</li>
-                <li>Submit your feedback, and let AI detect the sentiment.</li>
-                <li>Report concerns like broken streetlights, water issues, etc.</li>
-            </ul>
-        </section>
-
-        <section class="key-features">
-            <h2>🚀 Key Features</h2>
-            <ul>
-                <li>💬 AI Chat Assistant powered by IBM Granite</li>
-                <li>🧠 Sentiment Analysis for citizen feedback</li>
-                <li>📢 Concern Reporting for local issues</li>
-                <li>📊 Insightful Dashboard for real-time overview</li>
-            </ul>
-        </section>
-
-        <section class="why-useful">
-            <h2>💡 Why It's Useful</h2>
-            <p>
-                CitizenAI promotes transparent governance, quick issue resolution, and increased trust.
-                It gives every citizen a voice, while helping authorities understand community needs better.
-            </p>
-        </section>
-
-        <a href="{{ url_for('index') }}" class="back-home">← Back to Home</a>
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="navbar">
+      <div class="logo">🤖 CitizenAI</div>
+      <div class="nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('about') }}">About</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('login') }}">Login</a>
+      </div>
     </div>
+  </header>
+
+  <!-- ===== ABOUT CONTENT ===== -->
+  <div class="about-container">
+    <h1>About CitizenAI</h1>
+    <p>
+      CitizenAI is a next-generation civic engagement platform powered by artificial intelligence.
+      It bridges the gap between citizens and governments, promoting transparency, feedback, and issue resolution — all with a friendly AI assistant.
+    </p>
+
+    <section class="simple-terms">
+      <h2>🔍 In Simple Terms</h2>
+      <ul>
+        <li>Ask the AI Assistant questions about government services and local procedures.</li>
+        <li>Submit feedback and get sentiment-based analysis instantly.</li>
+        <li>Report issues like damaged roads, water leaks, or electricity problems.</li>
+      </ul>
+    </section>
+
+    <section class="key-features">
+      <h2>🚀 Key Features</h2>
+      <ul>
+        <li>💬 AI Chat Assistant powered by IBM Granite</li>
+        <li>🧠 Smart Sentiment Analysis for feedback</li>
+        <li>📢 Issue Reporting for civic problems</li>
+        <li>📊 Real-time Dashboard for administrators</li>
+      </ul>
+    </section>
+
+    <section class="why-useful">
+      <h2>💡 Why It’s Useful</h2>
+      <p>
+        CitizenAI empowers smarter governance and builds trust between citizens and authorities.  
+        It ensures faster responses, improved transparency, and data-driven decision-making for a better society.
+      </p>
+    </section>
+
+    <a href="{{ url_for('index') }}" class="back-home">← Back to Home</a>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    &copy; 2025 CitizenAI. All Rights Reserved.
+  </footer>
+
 </body>
 </html>

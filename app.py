@@ -60,7 +60,7 @@ def login():
     if request.method == "POST":
         if request.form["username"] == "admin" and request.form["password"] == "admin":
             session["user"] = "admin"
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("chat"))  # Redirect to chat page
         return render_template("login.html", error="Invalid credentials")
     return render_template("login.html")
 
