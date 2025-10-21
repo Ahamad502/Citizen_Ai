@@ -17,11 +17,17 @@ URL = os.getenv("IBM_URL", "https://us-south.ml.cloud.ibm.com")
 # Normalize URL (avoid trailing slash issues)
 BASE_URL = URL.rstrip("/")
 
+# Strip whitespace from PROJECT_ID to avoid format issues
+if PROJECT_ID:
+    PROJECT_ID = PROJECT_ID.strip()
+
 # Check if credentials are available
 ibm_client_available = bool(API_KEY and PROJECT_ID)
 
 if ibm_client_available:
-    print("✓ IBM Watsonx AI credentials loaded successfully")
+    print(f"✓ IBM Watsonx AI credentials loaded successfully")
+    print(f"  Project ID: {PROJECT_ID} (length: {len(PROJECT_ID)})")
+    print(f"  Region: {BASE_URL}")
 else:
     print("✗ IBM Watsonx AI credentials not found")
 
