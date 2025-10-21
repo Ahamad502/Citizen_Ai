@@ -78,12 +78,14 @@ def get_iam_token():
 def generate_with_watsonx(access_token: str, prompt: str):
     """Call watsonx.ai text generation REST API and return reply or error."""
     try:
-        # Pass project_id as query parameter per IBM watsonx.ai REST API spec
-        generation_url = f"{BASE_URL}/ml/v1/text/generation?version=2023-05-29&project_id={PROJECT_ID}"
+        # Use IBM watsonx.ai text generation endpoint. Provide project_id in headers and body for compatibility.
+        generation_url = f"{BASE_URL}/ml/v1/text/generation?version=2023-05-29"
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
             "Authorization": f"Bearer {access_token}",
+            "X-Project-Id": PROJECT_ID,
+            "X-WML-Project-ID": PROJECT_ID,
         }
         payload = {
             "model_id": "ibm/granite-3-8b-instruct",
@@ -96,9 +98,10 @@ def generate_with_watsonx(access_token: str, prompt: str):
                 "top_k": 50,
                 "top_p": 1,
             },
+            "project_id": PROJECT_ID,
         }
         print(f"Sending request to: {generation_url}")
-        print(f"Using project_id: {PROJECT_ID}")
+        print(f"Project ID in payload: '{payload['project_id']}' (len: {len(payload['project_id'])})")
         resp = requests.post(generation_url, headers=headers, json=payload, timeout=30)
         if resp.status_code != 200:
             return None, {
