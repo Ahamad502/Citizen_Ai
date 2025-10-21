@@ -25,9 +25,8 @@ if PROJECT_ID:
 ibm_client_available = bool(API_KEY and PROJECT_ID)
 
 if ibm_client_available:
-    print(f"✓ IBM Watsonx AI credentials loaded successfully")
-    print(f"  Project ID: {PROJECT_ID} (length: {len(PROJECT_ID)})")
-    print(f"  Region: {BASE_URL}")
+    # Minimal startup log without exposing IDs or secrets
+    print("✓ IBM Watsonx AI credentials loaded successfully")
 else:
     print("✗ IBM Watsonx AI credentials not found")
 
@@ -100,8 +99,7 @@ def generate_with_watsonx(access_token: str, prompt: str):
             },
             "project_id": PROJECT_ID,
         }
-        print(f"Sending request to: {generation_url}")
-        print(f"Project ID in payload: '{payload['project_id']}' (len: {len(payload['project_id'])})")
+        # Avoid logging sensitive request details in production
         resp = requests.post(generation_url, headers=headers, json=payload, timeout=30)
         if resp.status_code != 200:
             return None, {
@@ -131,41 +129,15 @@ def safe_text(text: str, limit: int = 500) -> str:
 @app.route("/health/ibm")
 def health_ibm():
     if not ibm_client_available:
-        return jsonify({
-            "ok": False,
-            "reason": "missing_credentials",
-            "project_id": PROJECT_ID,
-            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
-            "region": BASE_URL,
-        }), 200
+        return jsonify({"ok": False, "reason": "missing_credentials"}), 200
     token, terr = get_iam_token()
     if terr:
-        return jsonify({
-            "ok": False,
-            "stage": terr.get("stage"),
-            "detail": terr,
-            "project_id": PROJECT_ID,
-            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
-            "region": BASE_URL,
-        }), 200
+        return jsonify({"ok": False, "stage": terr.get("stage"), "detail": terr}), 200
     # Minimal dry-run prompt
     reply, gerr = generate_with_watsonx(token, "Say 'pong' only.")
     if gerr:
-        return jsonify({
-            "ok": False,
-            "stage": gerr.get("stage"),
-            "detail": gerr,
-            "project_id": PROJECT_ID,
-            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
-            "region": BASE_URL,
-        }), 200
-    return jsonify({
-        "ok": True,
-        "reply": reply,
-        "project_id": PROJECT_ID,
-        "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
-        "region": BASE_URL,
-    }), 200
+        return jsonify({"ok": False, "stage": gerr.get("stage"), "detail": gerr}), 200
+    return jsonify({"ok": True, "reply": reply}), 200
 
 
 # AI chatbot endpoint
