@@ -1,11 +1,5 @@
-Flask
-Flask-Session
-torch
-transformers
-accelerate
-bitsandbytes
-python-dotenv
-textblob
-flask_sqlalchemy
-openai
-ibm-watsonx-ai
+Flask==3.0.0
+python-dotenv==1.0.0
+ibm-watsonx-ai==0.2.6
+gunicorn==21.2.0
+Flask-Session==0.5.0

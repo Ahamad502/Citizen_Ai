@@ -1,38 +1,59 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
-from flask_session import Session
-from model import granite_generate_response
-from textblob import TextBlob
-# IBM Watsonx AI imports
-from ibm_watsonx_ai import Credentials
-from ibm_watsonx_ai.foundation_models import ModelInference
-import time
+from flask import Flask, render_template, jsonify, request
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# IBM Watsonx AI imports - with error handling
+try:
+    from ibm_watsonx_ai import Credentials
+    from ibm_watsonx_ai.foundation_models import ModelInference
+    ibm_watsonx_available = True
+except ImportError as e:
+    print(f"Warning: ibm-watsonx-ai package not installed: {e}")
+    print("Install it with: pip install ibm-watsonx-ai")
+    ibm_watsonx_available = False
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key_change_this")
 
-# IBM watsonx credentials
-API_KEY = "c7f6wBkqUmkmyfbA4gmQAYGOLbiqBBhwP2nzr7elWFIS"
-PROJECT_ID = "7d3f943c-f7aa-449b-9a3c-883516123e62"
-# For ibm-watsonx-ai package, we need to construct the URL
-URL = "https://us-south.ml.cloud.ibm.com"  # Dallas region URL
+# IBM watsonx credentials from environment variables
+API_KEY = os.getenv("IBM_API_KEY")
+PROJECT_ID = os.getenv("IBM_PROJECT_ID")
+URL = os.getenv("IBM_URL", "https://us-south.ml.cloud.ibm.com")
 
 # Connect to IBM watsonx
-try:
-    credentials = Credentials(
-        api_key=API_KEY,
-        url=URL
-    )
-    # Initialize the model with a supported model
-    model = ModelInference(
-        model_id="ibm/granite-3-8b-instruct",  # Using a supported model
-        credentials=credentials,
-        project_id=PROJECT_ID
-    )
-    ibm_client_available = True
-except Exception as e:
-    print(f"IBM Watsonx AI initialization failed: {e}")
+ibm_client_available = False
+model = None
+if ibm_watsonx_available and API_KEY and PROJECT_ID:
+    try:
+        print("Initializing IBM Watsonx AI...")
+        credentials = Credentials(
+            api_key=API_KEY,
+            url=URL
+        )
+        # Initialize the model with a supported model
+        model = ModelInference(
+            model_id="ibm/granite-3-8b-instruct",
+            credentials=credentials,
+            project_id=PROJECT_ID
+        )
+        ibm_client_available = True
+        print("✓ IBM Watsonx AI initialized successfully")
+    except KeyboardInterrupt:
+        print("\n✗ IBM Watsonx AI initialization cancelled")
+        ibm_client_available = False
+    except Exception as e:
+        print(f"✗ IBM Watsonx AI initialization failed: {e}")
+        print("App will run without AI features")
+        ibm_client_available = False
+else:
+    if not ibm_watsonx_available:
+        print("✗ IBM Watsonx AI package not available")
+    elif not API_KEY or not PROJECT_ID:
+        print("✗ IBM Watsonx AI credentials not found in .env file")
+        print("App will run with fallback responses")
     ibm_client_available = False
 
 # Simple cache for common questions (to reduce API costs)
@@ -44,55 +65,29 @@ response_cache = {
     "who are you": "I'm the CitizenAI assistant, here to help you with civic engagement and community-related questions."
 }
 
-# In-memory storage
-chat_history = []
-sentiments = []
-concerns = []
-
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/about")
-def about():
-    return render_template("about.html")
-
-@app.route("/services")
-def services():
-    return render_template("services.html")
-
-@app.route("/chat", methods=["GET", "POST"])
+@app.route("/chat")
 def chat():
-    response, sentiment, submitted = "", "", False
+    return render_template("chat.html")
 
-    if request.method == "POST":
-        if "question" in request.form:
-            question = request.form["question"]
-            response = granite_generate_response(question)
-            chat_history.append((question, response))
+@app.route("/feedback")
+def feedback():
+    return render_template("feedback.html")
 
-        elif "feedback" in request.form:
-            feedback = request.form["feedback"]
-            # Fix for TextBlob polarity issue
-            blob = TextBlob(feedback)
-            polarity = blob.sentiment.polarity
-            sentiment = "Positive" if polarity > 0 else "Negative" if polarity < 0 else "Neutral"
-            sentiments.append(sentiment)
-
-        elif "concern" in request.form:
-            concern = request.form["concern"]
-            concerns.append(concern)
-            submitted = True
-
-    return render_template("chat.html", history=chat_history, sentiment=sentiments[-1:] if sentiments else None, concern_submitted=submitted)
-
-# New route for AI chatbot
+# AI chatbot endpoint
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
     try:
         # Get the JSON message from the frontend
         data = request.get_json()
         user_message = data.get("message", "") if data else ""
+        
+        # Validate input
+        if not user_message:
+            return jsonify({"reply": "I didn't receive a message. Please try again."}), 400
         
         # Convert to lowercase for cache matching
         user_message_lower = user_message.lower().strip()
@@ -107,7 +102,7 @@ def chatbot():
             return jsonify({"reply": fallback_response}), 200
         
         # Send message to IBM Watsonx AI
-        prompt = f"You are a helpful assistant for a civic engagement platform called CitizenAI. {user_message}"
+        prompt = f"You are a helpful assistant for a civic engagement platform called CitizenAI. Answer concisely and helpfully. User question: {user_message}"
         response = model.generate(prompt=prompt, params={
             "decoding_method": "greedy",
             "max_new_tokens": 300,
@@ -118,47 +113,24 @@ def chatbot():
         })
         
         # Extract the AI's reply
-        ai_reply = response['results'][0]['generated_text']
+        if 'results' in response and len(response['results']) > 0:
+            ai_reply = response['results'][0]['generated_text']
+        else:
+            ai_reply = "I'm having trouble generating a response right now. Please try again later."
         
         # Add to cache if it's a common question (to reduce future costs)
-        if len(user_message) < 50:  # Only cache shorter questions
+        if len(user_message) < 50 and len(user_message) > 0:
             response_cache[user_message_lower] = ai_reply
         
         # Return the AI's reply as JSON
         return jsonify({"reply": ai_reply})
     except Exception as e:
-        # Get user message for fallback responses
-        data = request.get_json()
-        user_message = data.get("message", "") if data else ""
+        # Log the error for debugging
+        print(f"Chatbot error: {str(e)}")
         
         # Generic fallback
-        fallback_response = f"I understand your question about '{user_message}'. As an AI assistant, I'd be happy to help, but I'm currently experiencing technical difficulties. Please try rephrasing your question or check back later. Error details: {str(e)}"
+        fallback_response = "I'm currently experiencing technical difficulties. Please try again later."
         return jsonify({"reply": fallback_response}), 200
-
-@app.route("/dashboard")
-def dashboard():
-    pos = sentiments.count("Positive")
-    neg = sentiments.count("Negative")
-    neu = sentiments.count("Neutral")
-    return render_template("dashboard.html", pos=pos, neg=neg, neu=neu, concerns=concerns)
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        # Simple authentication - in production, use proper user validation
-        if username == "admin" and password == "admin":
-            session["user"] = username
-            return redirect(url_for("chat"))  # Redirect to chat page
-        else:
-            return render_template("login.html", error="Invalid credentials")
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)

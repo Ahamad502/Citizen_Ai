@@ -1,307 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CitizenAI | Chat Assistant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: #f8f9fa;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* ===== HEADER ===== */
-    header {
-      background: linear-gradient(135deg, #0077b6, #00b4d8);
-      padding: 15px 0;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .navbar {
-      width: 90%;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      color: white;
-      font-size: 1.8rem;
-      font-weight: 700;
-    }
-
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .nav-links a:hover {
-      background: white;
-      color: #0077b6;
-    }
-
-    /* ===== CHAT CONTAINER ===== */
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      max-width: 900px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-
-    .chat-header {
-      background: #0077b6;
-      color: white;
-      text-align: center;
-      padding: 15px;
-      font-size: 1.3rem;
-      font-weight: 600;
-    }
-
-    .chat-box {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      background: #f1faff;
-    }
-
-    .message {
-      max-width: 75%;
-      padding: 12px 18px;
-      border-radius: 20px;
-      line-height: 1.5;
-      word-wrap: break-word;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .user-message {
-      align-self: flex-end;
-      background: #0077b6;
-      color: white;
-      border-bottom-right-radius: 5px;
-    }
-
-    .bot-message {
-      align-self: flex-start;
-      background: #e0f7fa;
-      color: #023e8a;
-      border-bottom-left-radius: 5px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ===== INPUT AREA ===== */
-    .input-area {
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      border-top: 1px solid #ccc;
-      background: #fff;
-    }
-
-    .input-area input {
-      flex: 1;
-      padding: 12px 15px;
-      border-radius: 25px;
-      border: 1px solid #ccc;
-      outline: none;
-      font-size: 1rem;
-      transition: border 0.2s;
-    }
-
-    .input-area input:focus {
-      border-color: #0077b6;
-    }
-
-    .input-area button {
-      background: #0077b6;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      margin-left: 10px;
-      border-radius: 25px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .input-area button:hover {
-      background: #023e8a;
-    }
-
-    /* ===== FOOTER ===== */
-    footer {
-      background: #023e8a;
-      color: white;
-      text-align: center;
-      padding: 10px 0;
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .chat-container { margin: 10px; }
-      .message { max-width: 85%; }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- ===== HEADER ===== -->
-  <header>
-    <div class="navbar">
-      <div class="logo">🤖 CitizenAI</div>
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-        <a href="/services">Services</a>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/login">Login</a>
-      </div>
-    </div>
-  </header>
-
-  <!-- ===== CHAT INTERFACE ===== -->
-  <div class="chat-container">
-    <div class="chat-header">
-      💬 CitizenAI Chat Assistant
-    </div>
-
-    <div class="chat-box" id="chatBox">
-      <div class="bot-message message">
-        Hello 👋! I’m CitizenAI — how can I assist you today? You can ask about civic issues, report a problem, or request local information.
-      </div>
-    </div>
-
-    <div class="input-area">
-      <form id="chatForm" method="POST" action="/chat" style="display:flex; width:100%;">
-        <input type="text" id="userInput" name="message" placeholder="Type your message..." autocomplete="off" required>
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- ===== FOOTER ===== -->
-  <footer>
-    &copy; 2025 CitizenAI. All Rights Reserved.
-  </footer>
-
-  <!-- ===== JAVASCRIPT FOR AUTO SCROLL ===== -->
-  <script>
-    const chatBox = document.getElementById('chatBox');
-    const chatForm = document.getElementById('chatForm');
-    const userInput = document.getElementById('userInput');
-
-    // Function to format bot responses with better structure
-    function formatBotResponse(content) {
-      // Convert markdown-style headers to HTML
-      content = content.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-      content = content.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-      content = content.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-      
-      // Convert markdown-style bold
-      content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      
-      // Convert numbered lists
-      content = content.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
-      content = content.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
-      
-      // Convert bullet points
-      content = content.replace(/^\*\s(.*)$/gm, '<li>$1</li>');
-      content = content.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-      
-      // Convert line breaks
-      content = content.replace(/\n/g, '<br>');
-      
-      return content;
-    }
-
-    // Function to add a user message to the chat
-    function addUserMessage(content) {
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('message', 'user-message');
-      messageDiv.textContent = content;
-      chatBox.appendChild(messageDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // Function to add a bot message to the chat with formatting
-    function addBotMessage(content) {
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('message', 'bot-message');
-      
-      // Check if content has structured formatting
-      if (content.includes('#') || content.includes('1.') || content.includes('* ')) {
-        messageDiv.innerHTML = formatBotResponse(content);
-      } else {
-        messageDiv.textContent = content;
-      }
-      
-      chatBox.appendChild(messageDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    chatForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const userMsg = userInput.value.trim();
-      if (!userMsg) return;
-
-      // Add user message to chat
-      addUserMessage(userMsg);
-      
-      // Clear input
-      userInput.value = '';
-      
-      try {
-        // Send message to backend
-        const res = await fetch("/chatbot", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ message: userMsg })
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat - CitizenAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        const data = await res.json();
         
-        // Add formatted bot response to chat
-        addBotMessage(data.reply || "Sorry, I couldn't process that.");
-      } catch (error) {
-        console.error('Error:', error);
-        addBotMessage("Sorry, I'm having trouble connecting to the AI service right now.");
-      }
-    });
-  </script>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border-bottom: 2px solid #333;
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffffff 0%, #b8b8b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            border: 1px solid #404040;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+            border-color: #606060;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .chat-header {
+            text-align: center;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        .chat-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #b8b8b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chat-header p {
+            color: #a0a0a0;
+        }
+        
+        .chat-box {
+            background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+            border-radius: 12px;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            margin-left: auto;
+            text-align: right;
+            border: 1px solid #404040;
+        }
+        
+        .bot-message {
+            background: linear-gradient(135deg, #252525 0%, #1f1f1f 100%);
+            color: #e0e0e0;
+            line-height: 1.8;
+            border-left: 4px solid #606060;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+        
+        .bot-message strong {
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .timestamp {
+            font-size: 11px;
+            color: #707070;
+            margin-top: 5px;
+        }
+        
+        .chat-input-box {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #404040;
+            border-radius: 25px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #606060;
+            box-shadow: 0 0 0 4px rgba(96, 96, 96, 0.2);
+        }
+        
+        .chat-input::placeholder {
+            color: #707070;
+        }
+        
+        .send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .send-btn:hover {
+            background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+            border-color: #606060;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Scrollbar styling */
+        .chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-box::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 10px;
+        }
+        
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 10px;
+        }
+        
+        .chat-box::-webkit-scrollbar-thumb:hover {
+            background: #606060;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="nav">
+            <a href="/" class="logo">🏛️ CitizenAI</a>
+            <div class="nav-buttons">
+                <a href="/" class="btn">🏠 Home</a>
+                <a href="/feedback" class="btn">📝 Feedback</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="chat-header">
+            <h1>🤖 AI Assistant</h1>
+            <p>Ask me anything about community services!</p>
+        </div>
+        
+        <div class="chat-box" id="chatBox">
+            <div class="message bot-message">
+                <p><strong>👋 Welcome to CitizenAI Assistant!</strong></p>
+                <p>I'm here to help you with:</p>
+                <ul>
+                    <li>Community programs and services</li>
+                    <li>Local news and events</li>
+                    <li>Civic engagement questions</li>
+                    <li>Government processes and information</li>
+                </ul>
+                <p>How can I assist you today?</p>
+                <div class="timestamp" id="welcomeTime"></div>
+            </div>
+        </div>
+        
+        <div class="chat-input-box">
+            <input 
+                type="text" 
+                id="chatInput" 
+                class="chat-input" 
+                placeholder="Type your message..."
+                onkeypress="if(event.key==='Enter') sendMessage()"
+            />
+            <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        // Set welcome message timestamp
+        document.getElementById('welcomeTime').textContent = new Date().toLocaleTimeString();
+        const chatBox = document.getElementById('chatBox');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            
+            const typing = addMessage('Typing...', 'bot');
+            
+            try {
+                const response = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message})
+                });
+                
+                const data = await response.json();
+                chatBox.removeChild(typing);
+                addMessage(data.reply, 'bot');
+            } catch (error) {
+                chatBox.removeChild(typing);
+                addMessage('Sorry, something went wrong. Please try again.', 'bot');
+            } finally {
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+        
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}-message`;
+            
+            // Format the message content
+            if (sender === 'bot') {
+                div.innerHTML = formatBotMessage(text);
+            } else {
+                div.textContent = text;
+            }
+            
+            // Add timestamp
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            div.appendChild(timestamp);
+            
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
+        }
+        
+        function formatBotMessage(text) {
+            // First, handle bold text globally
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Split by double newlines for paragraphs
+            const lines = text.split('\n');
+            let formatted = '';
+            let inList = false;
+            let listItems = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (!line) {
+                    // Empty line - close any open list
+                    if (inList) {
+                        formatted += `<ul>${listItems.join('')}</ul>`;
+                        listItems = [];
+                        inList = false;
+                    }
+                    continue;
+                }
+                
+                // Check for bullet points (**, -, •, or starts with **)
+                if (line.startsWith('**') && line.includes(':')) {
+                    // This is a bold heading with description
+                    if (inList) {
+                        formatted += `<ul>${listItems.join('')}</ul>`;
+                        listItems = [];
+                        inList = false;
+                    }
+                    formatted += `<p>${line}</p>`;
+                }
+                else if (line.match(/^[-•]\s/) || (line.startsWith('**') && !line.includes(':'))) {
+                    // List item
+                    const cleaned = line.replace(/^[-•]\s*/, '').replace(/^\*\*/, '').replace(/\*\*:?$/, '');
+                    listItems.push(`<li>${cleaned}</li>`);
+                    inList = true;
+                }
+                else {
+                    // Regular paragraph
+                    if (inList) {
+                        formatted += `<ul>${listItems.join('')}</ul>`;
+                        listItems = [];
+                        inList = false;
+                    }
+                    formatted += `<p>${line}</p>`;
+                }
+            }
+            
+            // Close any remaining list
+            if (inList && listItems.length > 0) {
+                formatted += `<ul>${listItems.join('')}</ul>`;
+            }
+            
+            return formatted;
+        }
+        
+        chatInput.focus();
+    </script>
 </body>
 </html>
