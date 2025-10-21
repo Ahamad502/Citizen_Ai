@@ -14,6 +14,8 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key_change_this")
 API_KEY = os.getenv("IBM_API_KEY")
 PROJECT_ID = os.getenv("IBM_PROJECT_ID")
 URL = os.getenv("IBM_URL", "https://us-south.ml.cloud.ibm.com")
+# Normalize URL (avoid trailing slash issues)
+BASE_URL = URL.rstrip("/")
 
 # Check if credentials are available
 ibm_client_available = bool(API_KEY and PROJECT_ID)
@@ -44,6 +46,94 @@ def chat():
 def feedback():
     return render_template("feedback.html")
 
+# ---------- Helper utilities ----------
+def get_iam_token():
+    """Obtain IAM access token for IBM Cloud using the API key."""
+    try:
+        resp = requests.post(
+            "https://iam.cloud.ibm.com/identity/token",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={API_KEY}",
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return None, {
+                "stage": "token",
+                "status": resp.status_code,
+                "body": safe_text(resp.text),
+            }
+        return resp.json().get("access_token"), None
+    except requests.Timeout:
+        return None, {"stage": "token", "error": "timeout"}
+    except Exception as e:
+        return None, {"stage": "token", "error": str(e)}
+
+
+def generate_with_watsonx(access_token: str, prompt: str):
+    """Call watsonx.ai text generation REST API and return reply or error."""
+    try:
+        generation_url = f"{BASE_URL}/ml/v1/text/generation?version=2023-05-29"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+            # Some deployments expect the project id as a header; include both for compatibility
+            "X-Project-Id": PROJECT_ID,
+            "X-WML-Project-ID": PROJECT_ID,
+        }
+        payload = {
+            "model_id": "ibm/granite-3-8b-instruct",
+            "input": prompt,
+            "parameters": {
+                "decoding_method": "greedy",
+                "max_new_tokens": 300,
+                "min_new_tokens": 10,
+                "temperature": 0.7,
+                "top_k": 50,
+                "top_p": 1,
+            },
+            "project_id": PROJECT_ID,
+        }
+        resp = requests.post(generation_url, headers=headers, json=payload, timeout=30)
+        if resp.status_code != 200:
+            return None, {
+                "stage": "generation",
+                "status": resp.status_code,
+                "body": safe_text(resp.text),
+            }
+        data = resp.json()
+        if isinstance(data, dict) and data.get("results"):
+            return data["results"][0].get("generated_text"), None
+        return None, {"stage": "generation", "error": "empty results", "raw": data}
+    except requests.Timeout:
+        return None, {"stage": "generation", "error": "timeout"}
+    except Exception as e:
+        return None, {"stage": "generation", "error": str(e)}
+
+
+def safe_text(text: str, limit: int = 500) -> str:
+    """Trim overly long log strings and avoid leaking secrets."""
+    if not text:
+        return ""
+    t = str(text)
+    return (t[:limit] + "…") if len(t) > limit else t
+
+
+# Health endpoint to quickly validate IBM connectivity in production
+@app.route("/health/ibm")
+def health_ibm():
+    if not ibm_client_available:
+        return jsonify({"ok": False, "reason": "missing_credentials"}), 200
+    token, terr = get_iam_token()
+    if terr:
+        return jsonify({"ok": False, "stage": terr.get("stage"), "detail": terr}), 200
+    # Minimal dry-run prompt
+    reply, gerr = generate_with_watsonx(token, "Say 'pong' only.")
+    if gerr:
+        return jsonify({"ok": False, "stage": gerr.get("stage"), "detail": gerr}), 200
+    return jsonify({"ok": True, "reply": reply}), 200
+
+
 # AI chatbot endpoint
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
@@ -69,60 +159,22 @@ def chatbot():
             return jsonify({"reply": fallback_response}), 200
         
         try:
-            # Get IBM Cloud IAM token
-            print(f"Getting IAM token...")
-            token_response = requests.post(
-                "https://iam.cloud.ibm.com/identity/token",
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                data=f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={API_KEY}",
-                timeout=10
-            )
-            
-            if token_response.status_code != 200:
-                print(f"Token error ({token_response.status_code}): {token_response.text}")
+            print("Getting IAM token…")
+            access_token, terr = get_iam_token()
+            if terr or not access_token:
+                print(f"Token error: {terr}")
                 return jsonify({"reply": "Sorry, I'm having trouble authenticating with the AI service. Please try again later."}), 200
-                
-            access_token = token_response.json()["access_token"]
-            print(f"✓ Token received successfully")
-            
-            # Send message to IBM Watsonx AI using REST API
-            prompt = f"You are a helpful assistant for a civic engagement platform called CitizenAI. Answer concisely and helpfully. User question: {user_message}"
-            
-            generation_url = f"{URL}/ml/v1/text/generation?version=2023-05-29"
-            headers = {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {access_token}"
-            }
-            payload = {
-                "model_id": "ibm/granite-3-8b-instruct",
-                "input": prompt,
-                "parameters": {
-                    "decoding_method": "greedy",
-                    "max_new_tokens": 300,
-                    "min_new_tokens": 10,
-                    "temperature": 0.7,
-                    "top_k": 50,
-                    "top_p": 1
-                },
-                "project_id": PROJECT_ID
-            }
-            
-            print(f"Sending request to IBM Watsonx AI...")
-            response = requests.post(generation_url, headers=headers, json=payload, timeout=30)
-            
-            if response.status_code != 200:
-                print(f"Generation error ({response.status_code}): {response.text}")
+
+            prompt = (
+                "You are a helpful assistant for a civic engagement platform called CitizenAI. "
+                "Answer concisely and helpfully. User question: " + user_message
+            )
+
+            print("Sending request to IBM Watsonx AI…")
+            ai_reply, gerr = generate_with_watsonx(access_token, prompt)
+            if gerr or not ai_reply:
+                print(f"Generation error: {gerr}")
                 return jsonify({"reply": "Sorry, I'm having trouble generating a response. Please try again later."}), 200
-            
-            # Extract the AI's reply
-            response_data = response.json()
-            print(f"✓ Response received: {response_data}")
-            
-            if 'results' in response_data and len(response_data['results']) > 0:
-                ai_reply = response_data['results'][0]['generated_text']
-            else:
-                ai_reply = "I'm having trouble generating a response right now. Please try again later."
             
             # Add to cache if it's a common question (to reduce future costs)
             if len(user_message) < 50 and len(user_message) > 0:
