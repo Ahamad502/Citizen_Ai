@@ -1,19 +1,11 @@
 from flask import Flask, render_template, jsonify, request
 import os
+import requests
+import json
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# IBM Watsonx AI imports - with error handling
-try:
-    from ibm_watsonx_ai import Credentials
-    from ibm_watsonx_ai.foundation_models import ModelInference
-    ibm_watsonx_available = True
-except ImportError as e:
-    print(f"Warning: ibm-watsonx-ai package not installed: {e}")
-    print("Install it with: pip install ibm-watsonx-ai")
-    ibm_watsonx_available = False
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key_change_this")
@@ -23,38 +15,13 @@ API_KEY = os.getenv("IBM_API_KEY")
 PROJECT_ID = os.getenv("IBM_PROJECT_ID")
 URL = os.getenv("IBM_URL", "https://us-south.ml.cloud.ibm.com")
 
-# Connect to IBM watsonx
-ibm_client_available = False
-model = None
-if ibm_watsonx_available and API_KEY and PROJECT_ID:
-    try:
-        print("Initializing IBM Watsonx AI...")
-        credentials = Credentials(
-            api_key=API_KEY,
-            url=URL
-        )
-        # Initialize the model with a supported model
-        model = ModelInference(
-            model_id="ibm/granite-3-8b-instruct",
-            credentials=credentials,
-            project_id=PROJECT_ID
-        )
-        ibm_client_available = True
-        print("✓ IBM Watsonx AI initialized successfully")
-    except KeyboardInterrupt:
-        print("\n✗ IBM Watsonx AI initialization cancelled")
-        ibm_client_available = False
-    except Exception as e:
-        print(f"✗ IBM Watsonx AI initialization failed: {e}")
-        print("App will run without AI features")
-        ibm_client_available = False
+# Check if credentials are available
+ibm_client_available = bool(API_KEY and PROJECT_ID)
+
+if ibm_client_available:
+    print("✓ IBM Watsonx AI credentials loaded successfully")
 else:
-    if not ibm_watsonx_available:
-        print("✗ IBM Watsonx AI package not available")
-    elif not API_KEY or not PROJECT_ID:
-        print("✗ IBM Watsonx AI credentials not found in .env file")
-        print("App will run with fallback responses")
-    ibm_client_available = False
+    print("✗ IBM Watsonx AI credentials not found")
 
 # Simple cache for common questions (to reduce API costs)
 response_cache = {
@@ -101,20 +68,52 @@ def chatbot():
             fallback_response = f"I understand your question about '{user_message}'. Unfortunately, I'm currently unable to access the IBM Watsonx AI service. Please check the configuration or try again later."
             return jsonify({"reply": fallback_response}), 200
         
-        # Send message to IBM Watsonx AI
+        # Get IBM Cloud IAM token
+        token_response = requests.post(
+            "https://iam.cloud.ibm.com/identity/token",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={API_KEY}"
+        )
+        
+        if token_response.status_code != 200:
+            print(f"Token error: {token_response.text}")
+            return jsonify({"reply": "Sorry, I'm having trouble connecting to the AI service. Please try again later."}), 200
+            
+        access_token = token_response.json()["access_token"]
+        
+        # Send message to IBM Watsonx AI using REST API
         prompt = f"You are a helpful assistant for a civic engagement platform called CitizenAI. Answer concisely and helpfully. User question: {user_message}"
-        response = model.generate(prompt=prompt, params={
-            "decoding_method": "greedy",
-            "max_new_tokens": 300,
-            "min_new_tokens": 10,
-            "temperature": 0.7,
-            "top_k": 50,
-            "top_p": 1
-        })
+        
+        generation_url = f"{URL}/ml/v1/text/generation?version=2023-05-29"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+        payload = {
+            "model_id": "ibm/granite-3-8b-instruct",
+            "input": prompt,
+            "parameters": {
+                "decoding_method": "greedy",
+                "max_new_tokens": 300,
+                "min_new_tokens": 10,
+                "temperature": 0.7,
+                "top_k": 50,
+                "top_p": 1
+            },
+            "project_id": PROJECT_ID
+        }
+        
+        response = requests.post(generation_url, headers=headers, json=payload)
+        
+        if response.status_code != 200:
+            print(f"Generation error: {response.text}")
+            return jsonify({"reply": "Sorry, I'm having trouble generating a response. Please try again later."}), 200
         
         # Extract the AI's reply
-        if 'results' in response and len(response['results']) > 0:
-            ai_reply = response['results'][0]['generated_text']
+        response_data = response.json()
+        if 'results' in response_data and len(response_data['results']) > 0:
+            ai_reply = response_data['results'][0]['generated_text']
         else:
             ai_reply = "I'm having trouble generating a response right now. Please try again later."
         
