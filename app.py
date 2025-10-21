@@ -131,15 +131,41 @@ def safe_text(text: str, limit: int = 500) -> str:
 @app.route("/health/ibm")
 def health_ibm():
     if not ibm_client_available:
-        return jsonify({"ok": False, "reason": "missing_credentials"}), 200
+        return jsonify({
+            "ok": False,
+            "reason": "missing_credentials",
+            "project_id": PROJECT_ID,
+            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
+            "region": BASE_URL,
+        }), 200
     token, terr = get_iam_token()
     if terr:
-        return jsonify({"ok": False, "stage": terr.get("stage"), "detail": terr}), 200
+        return jsonify({
+            "ok": False,
+            "stage": terr.get("stage"),
+            "detail": terr,
+            "project_id": PROJECT_ID,
+            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
+            "region": BASE_URL,
+        }), 200
     # Minimal dry-run prompt
     reply, gerr = generate_with_watsonx(token, "Say 'pong' only.")
     if gerr:
-        return jsonify({"ok": False, "stage": gerr.get("stage"), "detail": gerr}), 200
-    return jsonify({"ok": True, "reply": reply}), 200
+        return jsonify({
+            "ok": False,
+            "stage": gerr.get("stage"),
+            "detail": gerr,
+            "project_id": PROJECT_ID,
+            "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
+            "region": BASE_URL,
+        }), 200
+    return jsonify({
+        "ok": True,
+        "reply": reply,
+        "project_id": PROJECT_ID,
+        "project_id_len": len(PROJECT_ID) if PROJECT_ID else 0,
+        "region": BASE_URL,
+    }), 200
 
 
 # AI chatbot endpoint
