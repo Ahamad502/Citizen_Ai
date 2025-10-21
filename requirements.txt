@@ -7,3 +7,5 @@ bitsandbytes
 python-dotenv
 textblob
 flask_sqlalchemy
+openai
+ibm-watsonx-ai

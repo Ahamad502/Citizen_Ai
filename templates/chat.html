@@ -179,11 +179,11 @@
     <div class="navbar">
       <div class="logo">🤖 CitizenAI</div>
       <div class="nav-links">
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('about') }}">About</a>
-        <a href="{{ url_for('services') }}">Services</a>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('login') }}">Login</a>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/services">Services</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/login">Login</a>
       </div>
     </div>
   </header>
@@ -201,7 +201,7 @@
     </div>
 
     <div class="input-area">
-      <form id="chatForm" method="POST" action="{{ url_for('chat') }}" style="display:flex; width:100%;">
+      <form id="chatForm" method="POST" action="/chat" style="display:flex; width:100%;">
         <input type="text" id="userInput" name="message" placeholder="Type your message..." autocomplete="off" required>
         <button type="submit">Send</button>
       </form>
@@ -219,36 +219,88 @@
     const chatForm = document.getElementById('chatForm');
     const userInput = document.getElementById('userInput');
 
+    // Function to format bot responses with better structure
+    function formatBotResponse(content) {
+      // Convert markdown-style headers to HTML
+      content = content.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      content = content.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      content = content.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      
+      // Convert markdown-style bold
+      content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Convert numbered lists
+      content = content.replace(/^\d+\.\s(.*)$/gm, '<li>$1</li>');
+      content = content.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+      
+      // Convert bullet points
+      content = content.replace(/^\*\s(.*)$/gm, '<li>$1</li>');
+      content = content.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+      
+      // Convert line breaks
+      content = content.replace(/\n/g, '<br>');
+      
+      return content;
+    }
+
+    // Function to add a user message to the chat
+    function addUserMessage(content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', 'user-message');
+      messageDiv.textContent = content;
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Function to add a bot message to the chat with formatting
+    function addBotMessage(content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', 'bot-message');
+      
+      // Check if content has structured formatting
+      if (content.includes('#') || content.includes('1.') || content.includes('* ')) {
+        messageDiv.innerHTML = formatBotResponse(content);
+      } else {
+        messageDiv.textContent = content;
+      }
+      
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const userMsg = userInput.value.trim();
       if (!userMsg) return;
 
-      // Add user message
-      const userDiv = document.createElement('div');
-      userDiv.classList.add('message', 'user-message');
-      userDiv.textContent = userMsg;
-      chatBox.appendChild(userDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
+      // Add user message to chat
+      addUserMessage(userMsg);
+      
       // Clear input
       userInput.value = '';
+      
+      try {
+        // Send message to backend
+        const res = await fetch("/chatbot", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message: userMsg })
+        });
 
-      // Send message to backend
-      const res = await fetch("{{ url_for('chat') }}", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg })
-      });
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
 
-      const data = await res.json();
-
-      // Add bot response
-      const botDiv = document.createElement('div');
-      botDiv.classList.add('message', 'bot-message');
-      botDiv.textContent = data.response || "Sorry, I couldn't process that.";
-      chatBox.appendChild(botDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+        const data = await res.json();
+        
+        // Add formatted bot response to chat
+        addBotMessage(data.reply || "Sorry, I couldn't process that.");
+      } catch (error) {
+        console.error('Error:', error);
+        addBotMessage("Sorry, I'm having trouble connecting to the AI service right now.");
+      }
     });
   </script>
 </body>

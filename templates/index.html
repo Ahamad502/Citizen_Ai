@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CitizenAI - Empowering Smart Communities</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="/static/css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* ======== GLOBAL ======== */
     body {
@@ -174,6 +176,120 @@
       font-size: 0.9rem;
     }
 
+    /* ======== CHATBOT ======== */
+    .chat-popup {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1001;
+    }
+
+    .chat-container {
+      width: 350px;
+      max-height: 500px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-messages {
+      padding: 15px;
+      height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      padding: 10px 15px;
+      border-radius: 18px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user-message {
+      background-color: #0077b6;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+
+    .ai-message {
+      background-color: #f1f1f1;
+      color: #333;
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+    }
+
+    .chat-input-container {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #eee;
+      background-color: white;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+    }
+
+    .send-button {
+      background: #0077b6;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      margin-left: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .send-button:hover {
+      background: #023e8a;
+    }
+
+    .chat-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    .close-chat {
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
     /* ======== RESPONSIVE ======== */
     @media (max-width: 768px) {
       .nav-links {
@@ -181,6 +297,10 @@
       }
       .navbar {
         flex-direction: column;
+      }
+      
+      .chat-container {
+        width: 300px;
       }
     }
   </style>
@@ -192,11 +312,11 @@
     <div class="navbar">
       <div class="logo">🤖 CitizenAI</div>
       <div class="nav-links">
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('about') }}">About</a>
-        <a href="{{ url_for('services') }}">Services</a>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('login') }}">Login</a>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/services">Services</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/login">Login</a>
       </div>
     </div>
   </header>
@@ -205,7 +325,7 @@
   <section class="hero">
     <h1>Empowering Smarter Communities</h1>
     <p>CitizenAI connects people, governments, and technology for better civic engagement and community growth.</p>
-    <a href="{{ url_for('login') }}" class="btn">Get Started</a>
+    <a href="/login" class="btn">Get Started</a>
   </section>
 
   <!-- ===== ABOUT SECTION ===== -->
@@ -224,25 +344,145 @@
       <div class="service-card">
         <h3>🗣️ AI Chat Support</h3>
         <p>Engage with our advanced AI assistant for instant responses to citizen queries.</p>
-        <a href="{{ url_for('chat') }}" class="btn">Go to Chat</a>
+        <a href="/chat" class="btn">Go to Chat</a>
       </div>
       <div class="service-card">
         <h3>📊 Sentiment Analysis</h3>
         <p>Analyze citizen feedback and detect emotions to improve governance transparency.</p>
-        <a href="{{ url_for('dashboard') }}" class="btn">View Dashboard</a>
+        <a href="/dashboard" class="btn">View Dashboard</a>
       </div>
       <div class="service-card">
         <h3>🧭 Dashboard Insights</h3>
         <p>Visualize reports, track issues, and understand trends through data-driven dashboards.</p>
-        <a href="{{ url_for('dashboard') }}" class="btn">Go to Dashboard</a>
+        <a href="/dashboard" class="btn">Go to Dashboard</a>
       </div>
     </div>
   </section>
+
+  <!-- ===== CHATBOT ICON ===== -->
+  <div class="chat-icon" onclick="toggleChat()">
+    💬
+  </div>
+
+  <!-- ===== CHATBOT POPUP ===== -->
+  <div id="chatPopup" class="chat-popup">
+    <div class="chat-container">
+      <div class="chat-header">
+        <span>CitizenAI Assistant</span>
+        <span class="close-chat" onclick="toggleChat()">×</span>
+      </div>
+      <div id="chatMessages" class="chat-messages">
+        <div class="message ai-message">
+          Hello! I'm your CitizenAI assistant. How can I help you today?
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" id="userInput" class="chat-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        <button class="send-button" onclick="sendMessage()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="white" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== FOOTER ===== -->
   <footer>
     &copy; 2025 CitizenAI. All Rights Reserved.
   </footer>
+
+  <script>
+    // Toggle chat visibility
+    function toggleChat() {
+      const chatPopup = document.getElementById('chatPopup');
+      chatPopup.style.display = chatPopup.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Handle Enter key press
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    // Send message to backend
+    async function sendMessage() {
+      const userInput = document.getElementById('userInput');
+      const message = userInput.value.trim();
+      
+      if (!message) return;
+      
+      // Display user message
+      displayMessage(message, 'user');
+      userInput.value = '';
+      
+      try {
+        // Show typing indicator
+        const typingIndicator = displayMessage("...", 'ai typing');
+        typingIndicator.id = 'typing-indicator';
+        
+        // Send message to IBM Watsonx AI chatbot (running on port 5001)
+        const response = await fetch('http://127.0.0.1:5001/chatbot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: message })
+        });
+        
+        // Remove typing indicator
+        if (document.getElementById('typing-indicator')) {
+          document.getElementById('typing-indicator').remove();
+        }
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Display AI response
+          displayMessage(data.reply, 'ai');
+        } else {
+          // Remove typing indicator
+          if (document.getElementById('typing-indicator')) {
+            document.getElementById('typing-indicator').remove();
+          }
+          displayMessage("Sorry, I encountered an error (status: " + response.status + "). Please try again.", 'ai');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        // Remove typing indicator
+        if (document.getElementById('typing-indicator')) {
+          document.getElementById('typing-indicator').remove();
+        }
+        displayMessage("Sorry, I encountered an error: " + error.message + ". Please make sure the chatbot server is running.", 'ai');
+      }
+    }
+
+    // Display message in chat
+    function displayMessage(text, sender) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      
+      messageDiv.classList.add('message');
+      
+      if (sender === 'user') {
+        messageDiv.classList.add('user-message');
+      } else if (sender === 'ai') {
+        messageDiv.classList.add('ai-message');
+      } else if (sender === 'typing') {
+        messageDiv.classList.add('ai-message');
+        messageDiv.textContent = '...';
+      }
+      
+      if (sender !== 'typing') {
+        messageDiv.textContent = text;
+      }
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      return messageDiv;
+    }
+  </script>
 
 </body>
 </html>

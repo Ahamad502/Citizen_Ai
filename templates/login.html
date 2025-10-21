@@ -77,6 +77,7 @@
         .login-container .error-message {
             color: red;
             margin-bottom: 15px;
+            display: none;
         }
 
         .login-container a {
@@ -97,11 +98,11 @@
     <div class="login-container">
         <h2>Login to CitizenAI</h2>
         
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-        
-        <form method="POST" action="{{ url_for('login') }}">
+        <div class="error-message" id="errorMessage">
+            Invalid credentials
+        </div>
+
+        <form id="loginForm">
             <label for="username">Email or Username</label>
             <input type="text" id="username" name="username" placeholder="Enter your email or username" required>
 
@@ -111,7 +112,41 @@
             <button type="submit">Log In</button>
         </form>
 
-        <a href="{{ url_for('index') }}">🏠 Back to Home</a>
+        <a href="/">🏠 Back to Home</a>
     </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide error message
+            errorMessage.style.display = 'none';
+            
+            // Send login request
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+            });
+        });
+    </script>
 </body>
 </html>

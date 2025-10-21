@@ -46,11 +46,32 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        text-decoration: none;
     }
 
     .back-home:hover {
         background: #0d47a1;
         color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Go to Chat Button */
+    .go-to-chat {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .go-to-chat:hover {
+        background: #45a049;
         transform: translateY(-2px);
     }
 
@@ -154,7 +175,8 @@
 
 <!-- Header -->
 <div class="dashboard-header">
-    <div class="back-home" onclick="goBack()">🏠 Back to Home</div>
+    <a href="/" class="back-home">🏠 Back to Home</a>
+    <a href="/chat" class="go-to-chat">💬 Go to Chat</a>
     <h1>📊 CitizenAI Dashboard</h1>
     <p>Real-time civic engagement insights & sentiment analysis</p>
 </div>
@@ -163,15 +185,15 @@
 <section class="insights">
     <div class="card positive">
         <h3>😊 Positive Feedback</h3>
-        <p>124</p>
+        <p>{{ pos }}</p>
     </div>
     <div class="card neutral">
         <h3>😐 Neutral Feedback</h3>
-        <p>89</p>
+        <p>{{ neu }}</p>
     </div>
     <div class="card negative">
         <h3>☹️ Negative Feedback</h3>
-        <p>45</p>
+        <p>{{ neg }}</p>
     </div>
 </section>
 
@@ -191,10 +213,13 @@
 <!-- Recent Issues -->
 <section class="recent-issues">
     <h2>🛠️ Recent Citizen Reports</h2>
-    <div class="issue-item">🚧 Road Damage reported in Sector 14</div>
-    <div class="issue-item">💡 Streetlight malfunction in Zone 3</div>
-    <div class="issue-item">🗑️ Garbage overflow in Green Park</div>
-    <div class="issue-item">💧 Water leakage near Main Road</div>
+    {% if concerns %}
+        {% for concern in concerns %}
+        <div class="issue-item">{{ concern }}</div>
+        {% endfor %}
+    {% else %}
+        <div class="issue-item">No recent reports</div>
+    {% endif %}
 </section>
 
 <!-- Footer -->
@@ -203,9 +228,10 @@
 </footer>
 
 <script>
-    function goBack() {
-        window.location.href = "{{ url_for('index') }}";
-    }
+    // Get data from Flask template
+    const posCount = {{ pos }};
+    const neuCount = {{ neu }};
+    const negCount = {{ neg }};
 
     // Sentiment Chart
     const ctx1 = document.getElementById('sentimentChart').getContext('2d');
@@ -214,7 +240,7 @@
         data: {
             labels: ['Positive', 'Neutral', 'Negative'],
             datasets: [{
-                data: [124, 89, 45],
+                data: [posCount, neuCount, negCount],
                 backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
             }]
         },
