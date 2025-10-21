@@ -100,6 +100,8 @@ def generate_with_watsonx(access_token: str, prompt: str):
             },
             "project_id": PROJECT_ID,
         }
+        print(f"Sending request to: {generation_url}")
+        print(f"Project ID in payload: '{payload['project_id']}' (type: {type(payload['project_id'])})")
         resp = requests.post(generation_url, headers=headers, json=payload, timeout=30)
         if resp.status_code != 200:
             return None, {
